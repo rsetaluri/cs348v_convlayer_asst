@@ -5,8 +5,10 @@
 
 template<typename T> class SimpleConvolutionLayer : public ConvolutionLayer<T> {
  public:
-  SimpleConvolutionLayer(std::unique_ptr<ConvolutionKernel<T>> kernel)
-    : ConvolutionLayer<T>(std::move(kernel)) {}
+  SimpleConvolutionLayer(
+      std::unique_ptr<ConvolutionKernel<T>> dw_kernel,
+      std::unique_ptr<ConvolutionKernel<T>> pw_kernel)
+    : ConvolutionLayer<T>(std::move(dw_kernel), std::move(pw_kernel)) {}
 
   std::unique_ptr<FeatureMap<T>> Run(const FeatureMap<T>& input) override {
     // TODO: Run convolution here.
@@ -14,7 +16,8 @@ template<typename T> class SimpleConvolutionLayer : public ConvolutionLayer<T> {
   }
 
  private:
-  using ConvolutionLayer<T>::kernel_;
+  using ConvolutionLayer<T>::dw_kernel_;
+  using ConvolutionLayer<T>::pw_kernel_;
 };
 
 #endif  // SIMPLE_CONVOLUTION_LAYER_HPP_
