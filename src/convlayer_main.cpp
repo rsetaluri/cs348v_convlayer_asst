@@ -1,13 +1,24 @@
 #include <iostream>
+#include "convolution_kernel.hpp"
 #include "feature_map.hpp"
+#include "simple_convolution_layer.hpp"
 
 int main(int argc, char** argv) {
-  auto feature_map = FeatureMap<double>::New("fm.bin");
-  if (not feature_map) {
-    std::cout << "Could not read feature map from file fm.bin" << std::endl;
+  typedef double T;
+  auto activations = FeatureMap<T>::New("activations.bin");
+  if (not activations) {
+    std::cout << "Could not read activations from file activations.bin" << std::endl;
     return 0;
   }
-  std::cout << "width = " << feature_map->width() << std::endl;
-  std::cout << "height = " << feature_map->height() << std::endl;
-  std::cout << "channels = " << feature_map->channels() << std::endl;
+  auto kernel = ConvolutionKernel<T>::New("weights.bin");
+  if (not kernel) {
+    std::cout << "Could not read weights from file weights.bin" << std::endl;
+    return 0;
+  }
+  std::unique_ptr<ConvolutionLayer<T>> layer(
+      new SimpleConvolutionLayer<T>(std::move(kernel)));
+  auto output = layer->Run(*activations);
+  std::cout << "width = " << output->width() << std::endl;
+  std::cout << "height = " << output->height() << std::endl;
+  std::cout << "channels = " << output->channels() << std::endl;
 }
