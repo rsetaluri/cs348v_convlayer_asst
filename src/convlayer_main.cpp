@@ -5,14 +5,24 @@
 
 int main(int argc, char** argv) {
   typedef double T;
-  auto activations = FeatureMap<T>::New("activations.bin");
-  if (not activations) {
-    std::cout << "Could not read activations from file activations.bin" << std::endl;
+
+  if (argc < 3) {
+    std::cout << "usage: " << argv[0] << " activations weights" << std::endl;
     return 0;
   }
-  auto kernel = ConvolutionKernel<T>::New("weights.bin");
+  const std::string activations_filename = argv[1];
+  const std::string weights_filename = argv[2];
+
+  auto activations = FeatureMap<T>::New(activations_filename);
+  if (not activations) {
+    std::cout << "Could not read activations from file "
+              << activations_filename << std::endl;
+    return 0;
+  }
+  auto kernel = ConvolutionKernel<T>::New(weights_filename);
   if (not kernel) {
-    std::cout << "Could not read weights from file weights.bin" << std::endl;
+    std::cout << "Could not read weights from file "
+              << weights_filename << std::endl;
     return 0;
   }
   std::unique_ptr<ConvolutionLayer<T>> layer(
