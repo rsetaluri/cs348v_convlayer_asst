@@ -4,7 +4,7 @@
 #include "simple_convolution_layer.hpp"
 
 int main(int argc, char** argv) {
-  typedef double T;
+  typedef float T;
 
   if (argc < 4) {
     std::cout << "usage: " << argv[0] << " activations depthwise_weights"
