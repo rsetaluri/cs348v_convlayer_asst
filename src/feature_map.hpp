@@ -28,6 +28,14 @@ template<typename T> class FeatureMap {
   }
   ~FeatureMap() { delete[] data_; }
 
+  T& data(int row, int col, int channel) {
+    return data_[Index(row, col, channel)];
+  }
+
+  const T& data(int row, int col, int channel) const {
+    return data_[Index(row, col, channel)];
+  }
+
   int width() const { return width_; }
   int height() const { return height_; }
   int channels() const { return channels_; }
@@ -43,6 +51,10 @@ template<typename T> class FeatureMap {
   // Takes ownership of @data.
   FeatureMap(int width, int height, int channels, T* data)
     : width_(width), height_(height), channels_(channels), data_(data) {}
+
+  inline int Index(int row, int col, int channel) const {
+    return channel + channels_ * col + channels_ * width_ * row;
+  }
 
   int width_;
   int height_;
