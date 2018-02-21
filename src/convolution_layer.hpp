@@ -1,22 +1,26 @@
 #ifndef CONVOLUTION_LAYER_HPP_
 #define CONVOLUTION_LAYER_HPP_
 
-#include "convolution_kernel.hpp"
-#include "feature_map.hpp"
-
-template<typename T> class ConvolutionLayer {
+class ConvolutionLayer {
  public:
-  ConvolutionLayer(
-      std::unique_ptr<ConvolutionKernel<T>> dw_kernel,
-      std::unique_ptr<ConvolutionKernel<T>> pw_kernel)
-    : dw_kernel_(std::move(dw_kernel)),
-      pw_kernel_(std::move(pw_kernel)) {}
-
-  virtual std::unique_ptr<FeatureMap<T>> Run(const FeatureMap<T>& input) = 0;
-
- protected:
-  std::unique_ptr<ConvolutionKernel<T>> dw_kernel_;
-  std::unique_ptr<ConvolutionKernel<T>> pw_kernel_;
+  struct Data {
+    float* input = nullptr;
+    float* output = nullptr;
+    float* depthwise_weights = nullptr;
+    float* pointwise_weights = nullptr;
+    float* depthwise_bias = nullptr;
+    float* pointwise_bias = nullptr;
+  };
+  struct Parameters {
+    int width = 0;
+    int height = 0;
+    int channels = 0;
+    int k = 0;
+    int f = 0;
+  };
+  
+  virtual void Init(Parameters params) = 0;
+  virtual void Run(Parameters params, Data data) = 0;  
 };
 
 #endif  // CONVOLUTION_LAYER_HPP_

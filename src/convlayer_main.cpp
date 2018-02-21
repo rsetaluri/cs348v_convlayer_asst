@@ -1,53 +1,41 @@
+#include <chrono>
+#include <ctime>
 #include <iostream>
-#include "convolution_kernel.hpp"
-#include "feature_map.hpp"
+#include <memory>
+#include "convolution_layer.hpp"
 #include "simple_convolution_layer.hpp"
 
 int main(int argc, char** argv) {
-  typedef float T;
-
-  if (argc < 4) {
-    std::cout << "usage: " << argv[0] << " activations depthwise_weights"
-              << " pointwise_weights" << std::endl;
+  // Parse command line arguments.
+  if (argc < 5) {
+    std::cout << "usage: " << argv[0]
+              << " activations data golden num_runs" << std::endl;
     return 0;
   }
   const std::string activations_filename = argv[1];
-  const std::string dw_weights_filename = argv[2];
-  const std::string pw_weights_filename = argv[3];
+  const std::string data_filename = argv[2];
+  const std::string golden_filename = argv[3];
+  const int num_runs = atoi(argv[4]);
 
-  auto activations = FeatureMap<T>::New(activations_filename);
-  if (not activations) {
-    std::cout << "Could not read activations from file "
-              << activations_filename << std::endl;
-    return 0;
+  ConvolutionLayer::Parameters params;
+  ConvolutionLayer::Data data;
+  std::unique_ptr<ConvolutionLayer> conv_layer(new SimpleConvolutionLayer);
+  conv_layer->Init(params);
+
+  // Run convolution layer implementation for num_runs which is specified on the
+  // command line.
+  double total_elapsed = 0.;
+  for (int run = 0; run < num_runs; run++) {
+    auto start = std::chrono::system_clock::now();
+    conv_layer->Run(params, data);  
+    auto end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed = end - start;
+    total_elapsed += elapsed.count();
+    std::cout << "Convolution layer took " << elapsed.count()
+              << " secconds" << std::endl;
   }
-  auto dw_kernel = ConvolutionKernel<T>::New(dw_weights_filename);
-  if (not dw_kernel) {
-    std::cout << "Could not read depthwise weights from file "
-              << dw_weights_filename << std::endl;
-    return 0;
-  }
-  // Check that dw_kernel is really depthwise.
-  if (dw_kernel->n() != 1) {
-    std::cout << "Depthwise kernel is not actually depthwise" << std::endl;
-    return 0;
-  }
-  auto pw_kernel = ConvolutionKernel<T>::New(pw_weights_filename);
-  if (not pw_kernel) {
-    std::cout << "Could not read pointwise weights from file "
-              << pw_weights_filename << std::endl;
-    return 0;
-  }
-  // Check that pw_kernel is really pointwise.
-  if (pw_kernel->width() != 1 || pw_kernel->height() != 1) {
-    std::cout << "Pointwise kernel is not actually pointwise" << std::endl;
-    return 0;
-  }
-  std::unique_ptr<ConvolutionLayer<T>> layer(
-      new SimpleConvolutionLayer<T>(
-          std::move(dw_kernel), std::move(pw_kernel)));
-  auto output = layer->Run(*activations);
-  std::cout << "width = " << output->width() << std::endl;
-  std::cout << "height = " << output->height() << std::endl;
-  std::cout << "channels = " << output->channels() << std::endl;
+  const double average_elapsed = total_elapsed / (double)num_runs;
+  std::cout << "Average time: " << average_elapsed << "s" << std::endl;
+
+  return 0;
 }
