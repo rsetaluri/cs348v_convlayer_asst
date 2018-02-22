@@ -1,12 +1,12 @@
-#include "simple_convolution_layer.hpp"
+#include "halide_convolution_layer.hpp"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
 
-void SimpleConvolutionLayer::Init(Parameters params) {
+void HalideConvolutionLayer::Init(Parameters params) {
 }
 
-void SimpleConvolutionLayer::Run(Parameters params, Data data) {
+void HalideConvolutionLayer::Run(Parameters params, Data data) {
   auto input_index = [&params] (int i, int j, int c) {
     return c * params.width * params.height + j * params.width + i;
   };
