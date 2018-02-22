@@ -5,6 +5,7 @@
 #include <ctime>
 #include <iostream>
 #include <memory>
+#include <vector>
 #include "convolution_layer.hpp"
 #include "simple_convolution_layer.hpp"
 
