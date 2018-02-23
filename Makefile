@@ -1,9 +1,11 @@
 SRC_DIR := src
+HALIDE_DIR=/Users/setaluri/halide
 BUILD_DIR := build
 BIN_DIR := bin
 SRC_FILES := $(wildcard $(SRC_DIR)/*.cpp)
 OBJ_FILES := $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRC_FILES))
-LDFLAGS :=
+INCLUDES=-I$(HALIDE_DIR)/include
+LDFLAGS := -L$(HALIDE_DIR)/bin -lpthread -ldl -lHalide
 CPPFLAGS :=
 CXXFLAGS := -std=c++11
 
@@ -16,4 +18,4 @@ clean:
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(BUILD_DIR)
-	g++ $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+	g++ $(CPPFLAGS) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<

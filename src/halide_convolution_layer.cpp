@@ -18,7 +18,7 @@ void HalideConvolutionLayer::Run(Parameters params, Data data) {
     // TODO(raj): Populate w and b from @data.
     Halide::Buffer<float> w;  // convolution weights.
     Halide::Buffer<float> b;  // biases.
-    Halide::Rdom r(-1, 3, -1, 3);
+    Halide::RDom r(-1, 3, -1, 3);
     tmp(x, y, c) = 0.f;
     // Note the + 1 on the weights index, because r starts at -1.
     tmp(x, y, c) += input(x + r.x, y + r.y, c) * w(r.x + 1, r.y + 1) + b(c);
@@ -42,7 +42,7 @@ void HalideConvolutionLayer::Run(Parameters params, Data data) {
     // TODO(raj): Populate w and b from @data.
     Halide::Buffer<float> w;  // convolution weights.
     Halide::Buffer<float> b;  // biases.
-    Halide::Rdom r(-1, 3, -1, 3);
+    Halide::RDom r(-1, 3, -1, 3);
     output(x, y, c) = 0.f;
     output(x, y, c) += tmp(x, y, r.x) * w(c, r.x) + b(c);
   }
@@ -63,6 +63,8 @@ void HalideConvolutionLayer::Run(Parameters params, Data data) {
   // Realize output buffer and copy to data.output pointer.
   Halide::Buffer<float> output_buffer =
       output.realize(input.width(), input.height(), input.channels());
+  std::cout << "[DEBUG] output buffer size = "
+            << output_buffer.get()->number_of_elements() << std::endl;
   const auto raw_ptr = output_buffer.get()->data();
   std::memcpy(data.output, raw_ptr, params.width * params.height * params.f);
 }
