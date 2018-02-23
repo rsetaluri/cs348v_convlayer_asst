@@ -169,6 +169,7 @@ float GetMaxAbsDifference(const float* a, const float* b, int size) {
   for (int i = 0; i < size; i++) {
     max_diff = std::max(max_diff, (double)(std::fabs(a[i] - b[i])));
   }
+  return max_diff;
 }
 
 void Verify(std::string golden_filename, const float* output, int size) {
@@ -182,7 +183,7 @@ void Verify(std::string golden_filename, const float* output, int size) {
     std::cout << "Golden file is of the wrong size" << std::endl;
     return;
   }
-  const auto max_diff = GetMaxAbsDifference(&(golden[0]), output);
+  const auto max_diff = GetMaxAbsDifference(&(golden[0]), output, size);
   std::cout << "Maximum absolute difference from golden: "
             << max_diff << std::endl;
   fclose(f);
