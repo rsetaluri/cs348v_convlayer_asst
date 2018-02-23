@@ -7,6 +7,7 @@
 #include <memory>
 #include <vector>
 #include "convolution_layer.hpp"
+#include "halide_convolution_layer.hpp"
 #include "simple_convolution_layer.hpp"
 
 bool ReadData(std::string activations_filename,
@@ -163,6 +164,13 @@ bool ReadData(std::string activations_filename,
   return true;
 }
 
+float GetMaxAbsDifference(const float* a, const float* b, int size) {
+  double max_diff = -1.;
+  for (int i = 0; i < size; i++) {
+    max_diff = std::max(max_diff, (double)(std::fabs(a[i] - b[i])));
+  }
+}
+
 void Verify(std::string golden_filename, const float* output, int size) {
   FILE* f = fopen(golden_filename.c_str(), "rb");
   if (not f) {
@@ -174,10 +182,7 @@ void Verify(std::string golden_filename, const float* output, int size) {
     std::cout << "Golden file is of the wrong size" << std::endl;
     return;
   }
-  double max_diff = -1.;
-  for (int i = 0; i < size; i++) {
-    max_diff = std::max(max_diff, (double)(std::fabs(golden[i] - output[i])));
-  }
+  const auto max_diff = GetMaxAbsDifference(&(golden[0]), output);
   std::cout << "Maximum absolute difference from golden: "
             << max_diff << std::endl;
   fclose(f);
@@ -203,7 +208,8 @@ int main(int argc, char** argv) {
     std::cout << "Error reading in data: " << err << std::endl;
     return 0;
   }
-  std::unique_ptr<ConvolutionLayer> conv_layer(new SimpleConvolutionLayer);
+  //std::unique_ptr<ConvolutionLayer> conv_layer(new SimpleConvolutionLayer);
+  std::unique_ptr<ConvolutionLayer> conv_layer(new HalideConvolutionLayer);
   conv_layer->Init(params);
 
   // Run convolution layer implementation for num_runs which is specified on the

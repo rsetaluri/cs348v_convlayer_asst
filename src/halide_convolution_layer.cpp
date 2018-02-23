@@ -1,96 +1,68 @@
 #include "halide_convolution_layer.hpp"
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <iostream>
+#include "Halide.h"
 
 void HalideConvolutionLayer::Init(Parameters params) {
 }
 
 void HalideConvolutionLayer::Run(Parameters params, Data data) {
-  auto input_index = [&params] (int i, int j, int c) {
-    return c * params.width * params.height + j * params.width + i;
-  };
-  auto output_index = [&params] (int i, int j, int c) {
-    return c * params.width * params.height + j * params.width + i;
-  };
-  auto depthwise_weights_index = [&params] (int i, int j, int c) {
-    return c * params.k * params.k + j * params.k + i;
-  };
-  auto pointwise_weights_index = [&params] (int c1, int c2) {
-    return c2 * params.channels + c1;
-  };
-  float* tmp = new float[params.width * params.height * params.channels];
+  Halide::Buffer<float> input;
+  Halide::Func tmp;
+  Halide::Var x, y, c;
   // (1) Depthwise convolution. Note that the spatial kernel is centered
   // around the output pixel, so we need an offset.
-  const int kernel_start = -(params.k / 2);
-  for (int i = 0; i < params.width; i++) {
-    for (int j = 0; j < params.height; j++) {
-      for (int c = 0; c < params.f; c++) {
-        float val = 0.f;
-        for (int ii = 0; ii < params.k; ii++) {
-          for (int jj = 0; jj < params.k; jj++) {
-            // Note that we have to add 1 to the i and j inputs to the input
-            // index function due to padding.
-            const int in_index = input_index(i + ii + kernel_start + 1,
-                                             j + jj + kernel_start + 1,
-                                             c);
-            const int dw_index = depthwise_weights_index(ii, jj, c);
-            val += data.depthwise_weights[dw_index] * data.input[in_index];
-          }
-        }
-        tmp[input_index(i, j, c)] = val + data.depthwise_bias[c];
-      }
-    }
+  {
+    // TODO(raj): Populate w and b from @data.
+    Halide::Buffer<float> w;  // convolution weights.
+    Halide::Buffer<float> b;  // biases.
+    Halide::Rdom r(-1, 3, -1, 3);
+    tmp(x, y, c) = 0.f;
+    // Note the + 1 on the weights index, because r starts at -1.
+    tmp(x, y, c) += input(x + r.x, y + r.y, c) * w(r.x + 1, r.y + 1) + b(c);
   }
   // (2) Batch norm.
-  for (int c = 0; c < params.channels; c++) {
-    const float average = data.depthwise_average[c];
-    const float variance = data.depthwise_variance[c];
-    const float beta = data.depthwise_beta[c];
-    const float gamma = data.depthwise_gamma[c];
-    const float scale = gamma / sqrt(variance + params.epsilon);
-    for (int i = 0; i < params.width; i++) {
-      for (int j = 0; j < params.height; j++) {
-        const int index  = input_index(i, j, c);
-        tmp[index] = scale * (tmp[index] - average) + beta;
-      }
-    }
+  {
+    // TODO(raj): Populate batch norm parameters from @data.
+    Halide::Buffer<float> average;
+    Halide::Buffer<float> variance;
+    Halide::Buffer<float> beta;
+    Halide::Buffer<float> gamma;
+    Halide::Expr v = tmp(x, y, c);
+    v = (v - average(c)) / Halide::sqrt(variance(c) + params.epsilon);
+    tmp(x, y, c) = gamma(c) * v + beta(c);
   }
   // (3) ReLU.
-  auto relu = [] (float* array, int count) {
-    for (int i = 0; i < count; i++) array[i] = std::max(array[i], 0.f);
-  };
-  relu(tmp, params.width * params.height * params.channels);
+  tmp(x, y, c) = Halide::max(tmp(x, y, c), 0.f);
   // (4) Pointwise convolution.
-  for (int i = 0; i < params.width; i++) {
-    for (int j = 0; j < params.height; j++) {
-      for (int c = 0; c < params.f; c++) {
-        float val = 0.f;
-        for (int cc = 0; cc < params.channels; cc++) {
-          const int tmp_index = input_index(i, j, cc);
-          const int pw_index = pointwise_weights_index(c, cc);
-          val += data.pointwise_weights[pw_index] * tmp[tmp_index];
-        }
-        data.output[output_index(i, j, c)] = val + data.pointwise_bias[c];
-      }
-    }
+  Halide::Func output;
+  {
+    // TODO(raj): Populate w and b from @data.
+    Halide::Buffer<float> w;  // convolution weights.
+    Halide::Buffer<float> b;  // biases.
+    Halide::Rdom r(-1, 3, -1, 3);
+    output(x, y, c) = 0.f;
+    output(x, y, c) += tmp(x, y, r.x) * w(c, r.x) + b(c);
   }
   // (5) Batch norm.
-  for (int c = 0; c < params.f; c++) {
-    const float average = data.pointwise_average[c];
-    const float variance = data.pointwise_variance[c];
-    const float beta = data.pointwise_beta[c];
-    const float gamma = data.pointwise_gamma[c];
-    const float scale = gamma / sqrt(variance + params.epsilon);
-    for (int i = 0; i < params.width; i++) {
-      for (int j = 0; j < params.height; j++) {
-        const int index  = input_index(i, j, c);
-        data.output[index] = scale * (data.output[index] - average) + beta;
-      }
-    }
+  {
+    // TODO(raj): Populate batch norm parameters from @data.
+    Halide::Buffer<float> average;
+    Halide::Buffer<float> variance;
+    Halide::Buffer<float> beta;
+    Halide::Buffer<float> gamma;
+    Halide::Expr v = output(x, y, c);
+    v = (v - average(c)) / Halide::sqrt(variance(c) + params.epsilon);
+    output(x, y, c) = gamma(c) * v + beta(c);
   }
   // (6) ReLU.
-  relu(data.output, params.width * params.height * params.f);
+  output(x, y, c) = Halide::max(output(x, y, c), 0.f);
 
-  delete[] tmp;
+  // Realize output buffer and copy to data.output pointer.
+  Halide::Buffer<float> output_buffer =
+      output.realize(input.width(), input.height(), input.channels());
+  const auto raw_ptr = output_buffer.get()->data();
+  std::memcpy(data.output, raw_ptr, params.width * params.height * params.f);
 }
