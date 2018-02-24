@@ -7,7 +7,7 @@ OBJ_FILES := $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRC_FILES))
 INCLUDES=-I$(HALIDE_DIR)/include
 LDFLAGS := -L$(HALIDE_DIR)/bin -lpthread -ldl -lHalide
 CPPFLAGS :=
-CXXFLAGS := -std=c++11
+CXXFLAGS := -std=c++11 -g
 
 convlayer: $(OBJ_FILES)
 	@mkdir -p $(BIN_DIR)

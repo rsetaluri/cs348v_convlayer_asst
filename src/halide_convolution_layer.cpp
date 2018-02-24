@@ -9,27 +9,32 @@ void HalideConvolutionLayer::Init(Parameters params) {
 }
 
 void HalideConvolutionLayer::Run(Parameters params, Data data) {
-  Halide::Buffer<float> input;
+  Halide::Buffer<float> input(data.input,
+                              params.width + 2,
+                              params.height + 2,
+                              params.channels);
+  input.set_min(-1, -1);
   Halide::Func tmp;
   Halide::Var x, y, c;
   // (1) Depthwise convolution. Note that the spatial kernel is centered
   // around the output pixel, so we need an offset.
   {
-    // TODO(raj): Populate w and b from @data.
-    Halide::Buffer<float> w;  // convolution weights.
-    Halide::Buffer<float> b;  // biases.
-    Halide::RDom r(-1, 3, -1, 3);
+    Halide::Buffer<float> w(
+        data.depthwise_weights, params.k, params.k, params.channels);
+    Halide::Buffer<float> b(data.depthwise_bias, params.channels);
+    const int offset = params.k / 2;
+    Halide::RDom r(0, params.k, 0, params.k);
     tmp(x, y, c) = 0.f;
-    // Note the + 1 on the weights index, because r starts at -1.
-    tmp(x, y, c) += input(x + r.x, y + r.y, c) * w(r.x + 1, r.y + 1) + b(c);
+    tmp(x, y, c) +=
+        input(x + r.x - offset, y + r.y - offset, c) * w(r.x, r.y) + b(c);
   }
   // (2) Batch norm.
   {
     // TODO(raj): Populate batch norm parameters from @data.
-    Halide::Buffer<float> average;
-    Halide::Buffer<float> variance;
-    Halide::Buffer<float> beta;
-    Halide::Buffer<float> gamma;
+    Halide::Buffer<float> average(data.depthwise_average, params.channels);
+    Halide::Buffer<float> variance(data.depthwise_variance, params.channels);
+    Halide::Buffer<float> beta(data.depthwise_beta, params.channels);
+    Halide::Buffer<float> gamma(data.depthwise_gamma, params.channels);
     Halide::Expr v = tmp(x, y, c);
     v = (v - average(c)) / Halide::sqrt(variance(c) + params.epsilon);
     tmp(x, y, c) = gamma(c) * v + beta(c);
@@ -39,20 +44,19 @@ void HalideConvolutionLayer::Run(Parameters params, Data data) {
   // (4) Pointwise convolution.
   Halide::Func output;
   {
-    // TODO(raj): Populate w and b from @data.
-    Halide::Buffer<float> w;  // convolution weights.
-    Halide::Buffer<float> b;  // biases.
-    Halide::RDom r(-1, 3, -1, 3);
+    Halide::Buffer<float> w(data.pointwise_weights, params.f, params.channels);
+    Halide::Buffer<float> b(data.pointwise_bias, params.f);
+    Halide::RDom r(0, params.f);
     output(x, y, c) = 0.f;
     output(x, y, c) += tmp(x, y, r.x) * w(c, r.x) + b(c);
   }
   // (5) Batch norm.
   {
     // TODO(raj): Populate batch norm parameters from @data.
-    Halide::Buffer<float> average;
-    Halide::Buffer<float> variance;
-    Halide::Buffer<float> beta;
-    Halide::Buffer<float> gamma;
+    Halide::Buffer<float> average(data.pointwise_average, params.channels);
+    Halide::Buffer<float> variance(data.pointwise_variance, params.channels);
+    Halide::Buffer<float> beta(data.pointwise_beta, params.channels);
+    Halide::Buffer<float> gamma(data.pointwise_gamma, params.channels);
     Halide::Expr v = output(x, y, c);
     v = (v - average(c)) / Halide::sqrt(variance(c) + params.epsilon);
     output(x, y, c) = gamma(c) * v + beta(c);
@@ -62,7 +66,8 @@ void HalideConvolutionLayer::Run(Parameters params, Data data) {
 
   // Realize output buffer and copy to data.output pointer.
   Halide::Buffer<float> output_buffer =
-      output.realize(input.width(), input.height(), input.channels());
+      output.realize(input.width() - 2, input.height() - 2, params.f);
+  output_buffer.set_min(1, 1);
   std::cout << "[DEBUG] output buffer size = "
             << output_buffer.get()->number_of_elements() << std::endl;
   const auto raw_ptr = output_buffer.get()->data();
