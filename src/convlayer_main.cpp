@@ -114,7 +114,7 @@ bool ReadData(std::string activations_filename,
     }
     // Read in pointwise batch norm params.
     {
-      const int size = params->channels;
+      const int size = params->f;
       data->pointwise_average = new float[size];
       if (fread(data->pointwise_average, sizeof(float), size, f) != size) {
         error->assign("Incorrect number of elements in pointwise average");

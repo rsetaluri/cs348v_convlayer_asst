@@ -3,6 +3,10 @@
 
 #include "convolution_layer.hpp"
 
+// A simple Halide implementation of a MobileNet convolution layer. This
+// implementation does not provide an optimized schedule, and instead relies on
+// a default Halide schedule. This implementation should be used as an example
+// for getting Halide syntax right.
 class HalideConvolutionLayer : public ConvolutionLayer {
  public:
   HalideConvolutionLayer() = default;

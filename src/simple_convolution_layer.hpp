@@ -3,6 +3,9 @@
 
 #include "convolution_layer.hpp"
 
+// A simple, native C++ implementation of a MobileNet convolution layer. This
+// implementation is not optimized in anyway, and should be used as an example
+// for getting the semantics of the network right.
 class SimpleConvolutionLayer : public ConvolutionLayer {
  public:
   SimpleConvolutionLayer() = default;
