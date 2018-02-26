@@ -20,25 +20,25 @@ def RunMain():
     f = 128
     # Note the 2 additional elements in each dimension in the activations. This
     # is padding to make compute easier.
-    activations = np.zeros((width + 2, height + 2, channels), dtype=np.float32)
+    activations = np.random.random_sample((width + 2, height + 2, channels)).astype(np.float32) * float(20.) - float(10.)
 
-    dw_weights = np.zeros((k, k, channels), dtype=np.float32)
-    pw_weights = np.zeros((f, channels), dtype=np.float32)
+    dw_weights = np.random.random_sample((k, k, channels)).astype(np.float32) * float(20.) - float(10.)
+    pw_weights = np.random.random_sample((f, channels)).astype(np.float32) * float(20.) - float(10.)
 
-    dw_bias = np.zeros((channels), dtype=np.float32)
-    pw_bias = np.zeros((f), dtype=np.float32)
+    dw_bias = np.random.random_sample((channels)).astype(np.float32) * float(20.) - float(10.)
+    pw_bias = np.random.random_sample((f)).astype(np.float32) * float(20.) - float(10.)
 
-    dw_average = np.zeros((channels), dtype=np.float32)
-    dw_variance = np.zeros((channels), dtype=np.float32)
-    dw_beta = np.zeros((channels), dtype=np.float32)
-    dw_gamma = np.zeros((channels), dtype=np.float32)
+    dw_average = np.random.random_sample((channels)).astype(np.float32) * float(20.) - float(10.)
+    dw_variance = np.random.random_sample((channels)).astype(np.float32) * float(10.)
+    dw_beta = np.random.random_sample((channels)).astype(np.float32) * float(20.) - float(10.)
+    dw_gamma = np.random.random_sample((channels)).astype(np.float32) * float(20.) - float(10.)
 
-    pw_average = np.zeros((f), dtype=np.float32)
-    pw_variance = np.zeros((f), dtype=np.float32)
-    pw_beta = np.zeros((f), dtype=np.float32)
-    pw_gamma = np.zeros((f), dtype=np.float32)
+    pw_average = np.random.random_sample((f)).astype(np.float32) * float(20.) - float(10.)
+    pw_variance = np.random.random_sample((f)).astype(np.float32) * float(10.)
+    pw_beta = np.random.random_sample((f)).astype(np.float32) * float(20.) - float(10.)
+    pw_gamma = np.random.random_sample((f)).astype(np.float32) * float(20.) - float(10.)
 
-    golden = np.zeros((width, height, f), dtype=np.float32)
+    golden = np.random.random_sample((width, height, f)).astype(np.float32) * float(20.) - float(10.)
 
     # Write activations.
     WriteBytesToFile(struct.pack('i', int(width)), activations_filename)
