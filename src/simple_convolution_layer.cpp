@@ -8,6 +8,10 @@ void SimpleConvolutionLayer::Init(Parameters params) {
 
 void SimpleConvolutionLayer::Run(Parameters params, Data data) {
   auto input_index = [&params] (int i, int j, int c) {
+    return c * (params.width + 2) * (params.height + 2) +
+        j * (params.width + 2) + i;
+  };
+  auto tmp_index = [&params] (int i, int j, int c) {
     return c * params.width * params.height + j * params.width + i;
   };
   auto output_index = [&params] (int i, int j, int c) {
@@ -38,7 +42,7 @@ void SimpleConvolutionLayer::Run(Parameters params, Data data) {
             val += data.depthwise_weights[dw_index] * data.input[in_index];
           }
         }
-        tmp[input_index(i, j, c)] = val + data.depthwise_bias[c];
+        tmp[tmp_index(i, j, c)] = val;
       }
     }
   }
@@ -51,7 +55,7 @@ void SimpleConvolutionLayer::Run(Parameters params, Data data) {
     const float scale = gamma / sqrt(variance + params.epsilon);
     for (int i = 0; i < params.width; i++) {
       for (int j = 0; j < params.height; j++) {
-        const int index  = input_index(i, j, c);
+        const int index  = tmp_index(i, j, c);
         tmp[index] = scale * (tmp[index] - average) + beta;
       }
     }
@@ -67,11 +71,11 @@ void SimpleConvolutionLayer::Run(Parameters params, Data data) {
       for (int c = 0; c < params.f; c++) {
         float val = 0.f;
         for (int cc = 0; cc < params.channels; cc++) {
-          const int tmp_index = input_index(i, j, cc);
+          const int tmp_ind = tmp_index(i, j, cc);
           const int pw_index = pointwise_weights_index(c, cc);
-          val += data.pointwise_weights[pw_index] * tmp[tmp_index];
+          val += data.pointwise_weights[pw_index] * tmp[tmp_ind];
         }
-        data.output[output_index(i, j, c)] = val + data.pointwise_bias[c];
+        data.output[output_index(i, j, c)] = val /*+ data.pointwise_bias[c]*/;
       }
     }
   }
@@ -84,7 +88,7 @@ void SimpleConvolutionLayer::Run(Parameters params, Data data) {
     const float scale = gamma / sqrt(variance + params.epsilon);
     for (int i = 0; i < params.width; i++) {
       for (int j = 0; j < params.height; j++) {
-        const int index  = input_index(i, j, c);
+        const int index  = output_index(i, j, c);
         data.output[index] = scale * (data.output[index] - average) + beta;
       }
     }
