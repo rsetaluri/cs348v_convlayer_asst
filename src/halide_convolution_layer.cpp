@@ -20,7 +20,6 @@ void HalideConvolutionLayer::Run(Parameters params, Data data) {
   {
     Halide::Buffer<float> w(
         data.depthwise_weights, params.k, params.k, params.channels);
-    Halide::Buffer<float> b(data.depthwise_bias, params.channels);
     const int offset = params.k / 2;
     Halide::RDom r(0, params.k, 0, params.k);
     tmp(x, y, c) = 0.f;
@@ -44,10 +43,9 @@ void HalideConvolutionLayer::Run(Parameters params, Data data) {
   Halide::Func output;
   {
     Halide::Buffer<float> w(data.pointwise_weights, params.f, params.channels);
-    Halide::Buffer<float> b(data.pointwise_bias, params.f);
     Halide::RDom r(0, params.f);
     output(x, y, c) = 0.f;
-    output(x, y, c) += tmp(x, y, r.x) * w(c, r.x) /*+ b(c)*/;
+    output(x, y, c) += tmp(x, y, r.x) * w(c, r.x);
   }
   // (5) Batch norm.
   {

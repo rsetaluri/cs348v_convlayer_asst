@@ -9,9 +9,6 @@ class ConvolutionLayer {
     // Convolution kernel weights.
     float* depthwise_weights = nullptr;
     float* pointwise_weights = nullptr;
-    // Convolution biases.
-    float* depthwise_bias = nullptr;
-    float* pointwise_bias = nullptr;
     // Depthwise batch norm learned parameters.
     float* depthwise_average = nullptr;
     float* depthwise_variance = nullptr;

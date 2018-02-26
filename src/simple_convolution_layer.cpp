@@ -75,7 +75,7 @@ void SimpleConvolutionLayer::Run(Parameters params, Data data) {
           const int pw_index = pointwise_weights_index(c, cc);
           val += data.pointwise_weights[pw_index] * tmp[tmp_ind];
         }
-        data.output[output_index(i, j, c)] = val /*+ data.pointwise_bias[c]*/;
+        data.output[output_index(i, j, c)] = val;
       }
     }
   }

@@ -25,9 +25,6 @@ def RunMain():
     dw_weights = np.random.random_sample((k, k, channels)).astype(np.float32) * float(20.) - float(10.)
     pw_weights = np.random.random_sample((f, channels)).astype(np.float32) * float(20.) - float(10.)
 
-    dw_bias = np.random.random_sample((channels)).astype(np.float32) * float(20.) - float(10.)
-    pw_bias = np.random.random_sample((f)).astype(np.float32) * float(20.) - float(10.)
-
     dw_average = np.random.random_sample((channels)).astype(np.float32) * float(20.) - float(10.)
     dw_variance = np.random.random_sample((channels)).astype(np.float32) * float(10.)
     dw_beta = np.random.random_sample((channels)).astype(np.float32) * float(20.) - float(10.)
@@ -55,10 +52,6 @@ def RunMain():
     AppendBytesToFile(struct.pack('i', int(f)), weights_filename)
     AppendBytesToFile(struct.pack('i', int(channels)), weights_filename)
     AppendBytesToFile(pw_weights.tostring('F'), weights_filename)
-    # Write depthwise bias.
-    AppendBytesToFile(dw_bias.tostring('F'), weights_filename)
-    # Write pointwise bias.
-    AppendBytesToFile(pw_bias.tostring('F'), weights_filename)
     # Write depthwise batch norm params.
     AppendBytesToFile(dw_average.tostring('F'), weights_filename)
     AppendBytesToFile(dw_variance.tostring('F'), weights_filename)

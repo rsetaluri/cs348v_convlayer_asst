@@ -88,24 +88,6 @@ bool ReadData(std::string activations_filename,
                 << params->f << " x "
                 << params->channels << std::endl;
     }
-    // Read in depthwise bias.
-    {
-      const int size = params->channels;
-      data->depthwise_bias = new float[size];
-      if (fread(data->depthwise_bias, sizeof(float), size, f) != size) {
-        error->assign("Incorrect number of elements in depthwise bias");
-        return false;
-      }
-    }
-    // Read in pointwise bias.
-    {
-      const int size = params->f;
-      data->pointwise_bias = new float[size];
-      if (fread(data->pointwise_bias, sizeof(float), size, f) != size) {
-        error->assign("Incorrect number of elements in pointwise bias");
-        return false;
-      }
-    }
     // Read in depthwise batch norm params.
     {
       const int size = params->channels;
@@ -209,7 +191,6 @@ int main(int argc, char** argv) {
     std::cout << "Error reading in data: " << err << std::endl;
     return 0;
   }
-  //std::unique_ptr<ConvolutionLayer> conv_layer(new SimpleConvolutionLayer);
   std::unique_ptr<ConvolutionLayer> conv_layer(new HalideConvolutionLayer);
   conv_layer->Init(params);
 
