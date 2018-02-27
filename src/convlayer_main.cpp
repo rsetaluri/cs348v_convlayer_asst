@@ -7,8 +7,7 @@
 #include <memory>
 #include <vector>
 #include "convolution_layer.hpp"
-#include "halide_convolution_layer.hpp"
-#include "simple_convolution_layer.hpp"
+#include "fast_convolution_layer.hpp"
 
 bool ReadData(std::string activations_filename,
               std::string weights_filename,
@@ -191,7 +190,7 @@ int main(int argc, char** argv) {
     std::cout << "Error reading in data: " << err << std::endl;
     return 0;
   }
-  std::unique_ptr<ConvolutionLayer> conv_layer(new HalideConvolutionLayer);
+  std::unique_ptr<ConvolutionLayer> conv_layer(new FastConvolutionLayer);
   conv_layer->Init(params);
 
   // Run convolution layer implementation for num_runs which is specified on the
