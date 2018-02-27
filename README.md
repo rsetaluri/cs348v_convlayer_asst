@@ -8,7 +8,7 @@ Grab the assignment starter code.
 
     git clone < TODO: list repo >
 
-To run the assignment, you will need to download the scene datasets, located at < TODO: data location >.
+To run the assignment, you will need to download the scene datasets, located at http://graphics.stanford.edu/courses/cs348v-18-winter/asst/asst2/data.tar.
 
 __Build Instructions__
 
